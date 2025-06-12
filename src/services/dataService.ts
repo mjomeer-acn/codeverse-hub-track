@@ -56,35 +56,37 @@ export const dataService = {
     const user = mockData.users.find(u => 
       (u.email === identifier || u.accountId === identifier) && u.password === password
     );
-    return user || null;
+    return user ? user as User : null;
   },
 
   // Teams
   async getTeams(): Promise<Team[]> {
     await delay(300);
-    return mockData.teams;
+    return mockData.teams as Team[];
   },
 
   async getTeamById(id: number): Promise<Team | null> {
     await delay(300);
-    return mockData.teams.find(team => team.id === id) || null;
+    const team = mockData.teams.find(team => team.id === id);
+    return team ? team as Team : null;
   },
 
   // Challenges
   async getChallenges(): Promise<Challenge[]> {
     await delay(300);
-    return mockData.challenges.filter(challenge => challenge.isVisible);
+    return mockData.challenges.filter(challenge => challenge.isVisible) as Challenge[];
   },
 
   async getChallengeById(id: number): Promise<Challenge | null> {
     await delay(300);
-    return mockData.challenges.find(challenge => challenge.id === id) || null;
+    const challenge = mockData.challenges.find(challenge => challenge.id === id);
+    return challenge ? challenge as Challenge : null;
   },
 
   // Leaderboard
   async getLeaderboard(): Promise<(Team & { totalPoints: number })[]> {
     await delay(300);
-    const teams = mockData.teams;
+    const teams = mockData.teams as Team[];
     const leaderboard = teams.map(team => ({
       ...team,
       totalPoints: team.points
@@ -100,7 +102,7 @@ export const dataService = {
     
     return mockData.challenges.filter(challenge => 
       team.challenges.includes(challenge.id)
-    );
+    ) as Challenge[];
   },
 
   // Get participating teams for a challenge
@@ -108,6 +110,6 @@ export const dataService = {
     await delay(300);
     return mockData.teams.filter(team => 
       team.challenges.includes(challengeId)
-    );
+    ) as Team[];
   }
 };
