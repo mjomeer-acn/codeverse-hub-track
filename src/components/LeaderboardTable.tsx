@@ -1,35 +1,32 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Award, ArrowUpDown } from 'lucide-react';
-
-interface Team {
-  id: number;
-  name: string;
-  points: number;
-  challenges: string[];
-  members: number;
-  avatar: string;
-}
+import { dataService, Team } from '@/services/dataService';
 
 const LeaderboardTable = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
-  const mockTeams: Team[] = [
-    { id: 1, name: 'Neural Ninjas', points: 2850, challenges: ['AI Challenge', 'Web Dev', 'Data Science'], members: 4, avatar: '🧠' },
-    { id: 2, name: 'Code Crusaders', points: 2720, challenges: ['Web Dev', 'Mobile Dev'], members: 5, avatar: '⚔️' },
-    { id: 3, name: 'Pixel Pioneers', points: 2650, challenges: ['UI/UX', 'Web Dev', 'Game Dev'], members: 3, avatar: '🎨' },
-    { id: 4, name: 'Quantum Queriers', points: 2480, challenges: ['Data Science', 'AI Challenge'], members: 4, avatar: '🔬' },
-    { id: 5, name: 'Binary Builders', points: 2350, challenges: ['Web Dev', 'Backend'], members: 4, avatar: '🏗️' },
-    { id: 6, name: 'Lambda Legends', points: 2180, challenges: ['Functional Programming'], members: 3, avatar: 'λ' },
-    { id: 7, name: 'Stack Overflow', points: 1950, challenges: ['Full Stack'], members: 5, avatar: '📚' },
-    { id: 8, name: 'Debug Dragons', points: 1820, challenges: ['Bug Hunt', 'Web Dev'], members: 4, avatar: '🐉' },
-  ];
+  const [teams, setTeams] = useState<(Team & { totalPoints: number })[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const sortedTeams = [...mockTeams].sort((a, b) => {
-    return sortOrder === 'desc' ? b.points - a.points : a.points - b.points;
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const leaderboardData = await dataService.getLeaderboard();
+        setTeams(leaderboardData);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  const sortedTeams = [...teams].sort((a, b) => {
+    return sortOrder === 'desc' ? b.totalPoints - a.totalPoints : a.totalPoints - b.totalPoints;
   });
 
   const getRankIcon = (index: number) => {
@@ -49,6 +46,18 @@ const LeaderboardTable = () => {
       default: return 'bg-gradient-primary';
     }
   };
+
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
@@ -86,29 +95,16 @@ const LeaderboardTable = () => {
                   <div className="text-2xl">{team.avatar}</div>
                   <div>
                     <h3 className="font-semibold text-lg">{team.name}</h3>
-                    <p className="text-sm text-muted-foreground">{team.members} members</p>
+                    <p className="text-sm text-muted-foreground">{team.members.length} members</p>
                   </div>
                 </div>
               </div>
 
-              {/* Challenges and Points */}
+              {/* Points */}
               <div className="flex items-center space-x-4">
-                <div className="hidden md:flex flex-wrap gap-1">
-                  {team.challenges.slice(0, 3).map((challenge, idx) => (
-                    <Badge key={idx} variant="secondary" className="text-xs">
-                      {challenge}
-                    </Badge>
-                  ))}
-                  {team.challenges.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{team.challenges.length - 3}
-                    </Badge>
-                  )}
-                </div>
-                
                 <div className="text-right">
                   <div className={`text-2xl font-bold text-white px-3 py-1 rounded-full ${getRankBadgeColor(index)}`}>
-                    {team.points.toLocaleString()}
+                    {team.totalPoints.toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">points</div>
                 </div>

@@ -1,0 +1,218 @@
+
+{
+  "users": [
+    {
+      "role": "admin",
+      "email": "admin@accenture.com",
+      "password": "CodeVerse2025"
+    },
+    {
+      "role": "team_lead",
+      "accountId": "team_001",
+      "password": "team.pass"
+    },
+    {
+      "role": "team_lead",
+      "accountId": "team_002",
+      "password": "team.pass"
+    },
+    {
+      "role": "team_lead",
+      "accountId": "team_003",
+      "password": "team.pass"
+    },
+    {
+      "role": "team_lead",
+      "accountId": "team_004",
+      "password": "team.pass"
+    }
+  ],
+  "teams": [
+    {
+      "id": 1,
+      "accountId": "team_001",
+      "name": "Neural Ninjas",
+      "description": "A passionate team focused on AI and machine learning solutions. We specialize in neural networks and deep learning applications.",
+      "members": [
+        { "name": "Alex Chen", "role": "ML Engineer", "avatar": "👨‍💻" },
+        { "name": "Sarah Kim", "role": "Data Scientist", "avatar": "👩‍🔬" },
+        { "name": "Mike Johnson", "role": "Backend Dev", "avatar": "👨‍💼" },
+        { "name": "Emily Davis", "role": "Frontend Dev", "avatar": "👩‍💻" }
+      ],
+      "points": 2850,
+      "challenges": [1, 4, 6],
+      "avatar": "🧠",
+      "photo": "https://images.unsplash.com/photo-1519389950473-47ba0277781c"
+    },
+    {
+      "id": 2,
+      "accountId": "team_002",
+      "name": "Code Crusaders",
+      "description": "Full-stack developers committed to building scalable and robust applications with modern technologies.",
+      "members": [
+        { "name": "David Wilson", "role": "Team Lead", "avatar": "👨‍💼" },
+        { "name": "Lisa Zhang", "role": "Full Stack Dev", "avatar": "👩‍💻" },
+        { "name": "Tom Brown", "role": "DevOps", "avatar": "👨‍🔧" },
+        { "name": "Anna Smith", "role": "UI/UX Designer", "avatar": "👩‍🎨" },
+        { "name": "Jake Taylor", "role": "Backend Dev", "avatar": "👨‍💻" }
+      ],
+      "points": 2720,
+      "challenges": [2, 3],
+      "avatar": "⚔️",
+      "photo": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
+    },
+    {
+      "id": 3,
+      "accountId": "team_003",
+      "name": "Pixel Pioneers",
+      "description": "Creative minds specializing in user experience and interface design, bringing ideas to life through beautiful digital experiences.",
+      "members": [
+        { "name": "Maya Patel", "role": "UI/UX Lead", "avatar": "👩‍🎨" },
+        { "name": "Chris Lee", "role": "Frontend Dev", "avatar": "👨‍💻" },
+        { "name": "Sophie Turner", "role": "Graphic Designer", "avatar": "👩‍🎨" }
+      ],
+      "points": 2650,
+      "challenges": [2, 3, 4],
+      "avatar": "🎨",
+      "photo": "https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+    },
+    {
+      "id": 4,
+      "accountId": "team_004",
+      "name": "Quantum Queriers",
+      "description": "Data enthusiasts exploring the frontiers of quantum computing and advanced analytics to solve complex problems.",
+      "members": [
+        { "name": "Dr. Rachel Green", "role": "Research Lead", "avatar": "👩‍🔬" },
+        { "name": "Kevin Park", "role": "Data Engineer", "avatar": "👨‍💻" },
+        { "name": "Nicole Adams", "role": "Analyst", "avatar": "👩‍💼" },
+        { "name": "Ryan Murphy", "role": "Algorithm Dev", "avatar": "👨‍🔬" }
+      ],
+      "points": 2480,
+      "challenges": [1, 4],
+      "avatar": "🔬",
+      "photo": "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+    }
+  ],
+  "challenges": [
+    {
+      "id": 1,
+      "title": "AI Innovation Challenge",
+      "description": "Build an AI-powered solution that addresses a real-world problem. Use machine learning, NLP, or computer vision to create something innovative.",
+      "difficulty": "Hard",
+      "category": "Artificial Intelligence",
+      "timeRemaining": "3 days",
+      "participatingTeams": 12,
+      "maxPoints": 1000,
+      "isVisible": true,
+      "icon": "🤖",
+      "status": "active",
+      "requirements": [
+        "Use at least one AI/ML technology",
+        "Address a real-world problem",
+        "Create a working prototype",
+        "Prepare a 5-minute demo"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Full-Stack Web Application",
+      "description": "Create a complete web application with frontend, backend, and database integration. Focus on user experience and scalability.",
+      "difficulty": "Medium",
+      "category": "Web Development",
+      "timeRemaining": "5 days",
+      "participatingTeams": 18,
+      "maxPoints": 800,
+      "isVisible": true,
+      "icon": "🌐",
+      "status": "active",
+      "requirements": [
+        "Frontend and backend implementation",
+        "Database integration",
+        "Responsive design",
+        "API documentation"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Mobile App Development",
+      "description": "Design and develop a mobile application for iOS or Android. Emphasis on intuitive UI/UX and performance optimization.",
+      "difficulty": "Medium",
+      "category": "Mobile Development",
+      "timeRemaining": "4 days",
+      "participatingTeams": 8,
+      "maxPoints": 750,
+      "isVisible": true,
+      "icon": "📱",
+      "status": "active",
+      "requirements": [
+        "Native or cross-platform app",
+        "Intuitive user interface",
+        "Performance optimization",
+        "App store ready submission"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Data Visualization Dashboard",
+      "description": "Create an interactive dashboard that visualizes complex data sets. Make data insights accessible and actionable.",
+      "difficulty": "Easy",
+      "category": "Data Science",
+      "timeRemaining": "6 days",
+      "participatingTeams": 15,
+      "maxPoints": 600,
+      "isVisible": true,
+      "icon": "📊",
+      "status": "active",
+      "requirements": [
+        "Interactive data visualization",
+        "Real-time data updates",
+        "Export functionality",
+        "User-friendly interface"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Cybersecurity Solution",
+      "description": "Develop a tool or system that enhances cybersecurity. Focus on threat detection, prevention, or security automation.",
+      "difficulty": "Hard",
+      "category": "Security",
+      "timeRemaining": "2 days",
+      "participatingTeams": 6,
+      "maxPoints": 950,
+      "isVisible": true,
+      "icon": "🔒",
+      "status": "active",
+      "requirements": [
+        "Security threat mitigation",
+        "Automation capabilities",
+        "Comprehensive testing",
+        "Security documentation"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Cloud Infrastructure Optimization",
+      "description": "Build solutions for cloud infrastructure management, monitoring, or cost optimization using modern cloud platforms.",
+      "difficulty": "Medium",
+      "category": "DevOps",
+      "timeRemaining": "7 days",
+      "participatingTeams": 10,
+      "maxPoints": 700,
+      "isVisible": true,
+      "icon": "☁️",
+      "status": "active",
+      "requirements": [
+        "Cloud platform integration",
+        "Cost optimization features",
+        "Monitoring and alerts",
+        "Scalability considerations"
+      ]
+    }
+  ],
+  "leaderboard": [
+    { "teamId": 1, "points": 2850 },
+    { "teamId": 2, "points": 2720 },
+    { "teamId": 3, "points": 2650 },
+    { "teamId": 4, "points": 2480 }
+  ]
+}

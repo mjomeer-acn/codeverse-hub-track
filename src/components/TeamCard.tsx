@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Trophy, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface TeamMember {
   name: string;
@@ -18,7 +19,7 @@ interface TeamCardProps {
     description: string;
     members: TeamMember[];
     points: number;
-    challenges: string[];
+    challenges: number[];
     avatar: string;
     photo?: string;
   };
@@ -33,7 +34,7 @@ const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
             <img 
               src={team.photo} 
               alt={`${team.name} team photo`}
-              className="w-full h-32 object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+              className="w-full h-32 object-cover opacity-10 group-hover:opacity-20 transition-opacity"
             />
           </div>
         )}
@@ -78,25 +79,24 @@ const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
           </div>
         </div>
 
-        {/* Challenges */}
+        {/* Active Challenges Count */}
         <div>
           <h4 className="font-semibold text-sm mb-2">Active Challenges</h4>
-          <div className="flex flex-wrap gap-2">
-            {team.challenges.map((challenge, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {challenge}
-              </Badge>
-            ))}
-          </div>
+          <Badge variant="outline" className="text-xs">
+            {team.challenges.length} challenges
+          </Badge>
         </div>
 
         {/* View Details Button */}
         <Button 
           variant="outline" 
           className="w-full border-codeverse-accent text-codeverse-accent hover:bg-codeverse-accent hover:text-white"
+          asChild
         >
-          View Team Profile
-          <ExternalLink className="ml-2 h-4 w-4" />
+          <Link to={`/teams/${team.id}`}>
+            View Team Profile
+            <ExternalLink className="ml-2 h-4 w-4" />
+          </Link>
         </Button>
       </CardContent>
     </Card>

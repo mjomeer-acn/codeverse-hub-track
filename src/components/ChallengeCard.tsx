@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, Trophy, Eye } from 'lucide-react';
+import { Clock, Users, Trophy } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ChallengeCardProps {
   challenge: {
@@ -50,13 +51,6 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge }) => {
               </div>
             </div>
           </div>
-          
-          {challenge.isVisible && (
-            <div className="flex items-center space-x-1 text-green-600">
-              <Eye className="h-4 w-4" />
-              <span className="text-xs font-medium">Public</span>
-            </div>
-          )}
         </div>
       </CardHeader>
       
@@ -96,8 +90,11 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge }) => {
         {/* Action Button */}
         <Button 
           className="w-full bg-gradient-primary hover:opacity-90 text-white"
+          asChild
         >
-          View Challenge Details
+          <Link to={`/challenges/${challenge.id}`}>
+            View Challenge Details
+          </Link>
         </Button>
       </CardContent>
     </Card>
