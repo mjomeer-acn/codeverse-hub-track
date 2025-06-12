@@ -12,7 +12,7 @@ const Teams = () => {
   useEffect(() => {
     fetchTeams();
     
-    // Set up real-time subscription
+    // Set up real-time subscription with error handling
     const channel = supabase
       .channel('teams-public-changes')
       .on(
@@ -23,10 +23,17 @@ const Teams = () => {
           table: 'teams'
         },
         () => {
+          console.log('Teams data updated, refetching...');
           fetchTeams();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to teams changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.log('Error subscribing to teams changes');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -36,9 +43,11 @@ const Teams = () => {
   const fetchTeams = async () => {
     try {
       const teamsData = await teamsService.getTeams();
-      setTeams(teamsData);
+      console.log('Fetched teams:', teamsData);
+      setTeams(teamsData || []);
     } catch (error) {
       console.error('Error fetching teams:', error);
+      setTeams([]);
     } finally {
       setLoading(false);
     }
@@ -70,9 +79,15 @@ const Teams = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teams.map((team) => (
-              <TeamCard key={team.id} team={team} />
-            ))}
+            {teams && teams.length > 0 ? (
+              teams.map((team) => (
+                <TeamCard key={team.id} team={team} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No teams found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

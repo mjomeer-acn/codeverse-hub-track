@@ -115,6 +115,23 @@ export const challengesService = {
     return data;
   },
 
+  async getChallengeById(id: string) {
+    const { data, error } = await supabase
+      .from('challenges')
+      .select(`
+        *,
+        team_challenges(
+          team_id,
+          teams(*)
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
   async updateChallenge(id: string, updates: any) {
     const { data, error } = await supabase
       .from('challenges')
@@ -131,20 +148,28 @@ export const challengesService = {
 // Leaderboard service
 export const leaderboardService = {
   async getLeaderboard() {
+    // Get teams with aggregated points from leaderboard_entries
     const { data, error } = await supabase
       .from('teams')
       .select(`
         *,
-        team_members(*)
+        team_members(*),
+        leaderboard_entries(points)
       `)
       .order('points', { ascending: false });
     
     if (error) throw error;
-    return data.map(team => ({
-      ...team,
-      totalPoints: team.points,
-      members: team.team_members
-    }));
+    
+    return data.map(team => {
+      // Calculate total points from leaderboard_entries
+      const totalPoints = team.leaderboard_entries?.reduce((sum: number, entry: any) => sum + entry.points, 0) || 0;
+      
+      return {
+        ...team,
+        totalPoints,
+        members: team.team_members
+      };
+    }).sort((a, b) => b.totalPoints - a.totalPoints);
   },
 
   async assignPoints(entry: {

@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Save, X, Search } from 'lucide-react';
+import { Edit, Save, X, Search, Users } from 'lucide-react';
 import { teamsService } from '@/services/supabaseService';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const AdminTeams = () => {
   const [teams, setTeams] = useState<any[]>([]);
@@ -18,6 +19,7 @@ const AdminTeams = () => {
   const [editData, setEditData] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTeams();
@@ -46,7 +48,7 @@ const AdminTeams = () => {
   const fetchTeams = async () => {
     try {
       const data = await teamsService.getTeams();
-      setTeams(data);
+      setTeams(data || []);
     } catch (error) {
       console.error('Error fetching teams:', error);
       toast({
@@ -88,9 +90,13 @@ const AdminTeams = () => {
     setEditData({});
   };
 
+  const handleManageTeam = (teamId: string) => {
+    navigate(`/team/${teamId}/management`);
+  };
+
   const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.account_id.toLowerCase().includes(searchTerm.toLowerCase())
+    team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    team.account_id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -140,7 +146,7 @@ const AdminTeams = () => {
                         className="text-lg font-bold"
                       />
                     ) : (
-                      team.name
+                      team.name || 'Unnamed Team'
                     )}
                     <div className="flex space-x-2">
                       {editingTeam === team.id ? (
@@ -153,9 +159,14 @@ const AdminTeams = () => {
                           </Button>
                         </>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(team)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(team)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" onClick={() => handleManageTeam(team.id)}>
+                            <Users className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </CardTitle>
@@ -182,24 +193,28 @@ const AdminTeams = () => {
                         onChange={(e) => setEditData({ ...editData, account_id: e.target.value })}
                       />
                     ) : (
-                      <p className="text-sm font-mono">{team.account_id}</p>
+                      <p className="text-sm font-mono">{team.account_id || 'No Account ID'}</p>
                     )}
                   </div>
 
                   <div>
                     <Label>Members ({team.team_members?.length || 0})</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {team.team_members?.map((member: any, index: number) => (
-                        <div key={index} className="bg-muted px-2 py-1 rounded text-sm">
-                          {member.name} - {member.role}
-                        </div>
-                      ))}
+                      {team.team_members && team.team_members.length > 0 ? (
+                        team.team_members.map((member: any, index: number) => (
+                          <div key={index} className="bg-muted px-2 py-1 rounded text-sm">
+                            {member.name} - {member.role}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No members</p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Points:</span> {team.points}
+                      <span className="font-medium">Points:</span> {team.points || 0}
                     </div>
                     <div>
                       <span className="font-medium">Challenges:</span> {team.team_challenges?.length || 0}
@@ -209,6 +224,12 @@ const AdminTeams = () => {
               </Card>
             ))}
           </div>
+
+          {filteredTeams.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No teams found</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

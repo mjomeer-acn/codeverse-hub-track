@@ -6,12 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, Users, Trophy, CheckCircle } from 'lucide-react';
-import { dataService, Challenge, Team } from '@/services/dataService';
+import { challengesService } from '@/services/supabaseService';
 
 const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [participatingTeams, setParticipatingTeams] = useState<Team[]>([]);
+  const [challenge, setChallenge] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,13 +18,8 @@ const ChallengeDetail = () => {
       if (!id) return;
       
       try {
-        const challengeData = await dataService.getChallengeById(parseInt(id));
+        const challengeData = await challengesService.getChallengeById(id);
         setChallenge(challengeData);
-        
-        if (challengeData) {
-          const teams = await dataService.getChallengeTeams(challengeData.id);
-          setParticipatingTeams(teams);
-        }
       } catch (error) {
         console.error('Error fetching challenge data:', error);
       } finally {
@@ -74,6 +68,8 @@ const ChallengeDetail = () => {
     );
   }
 
+  const participatingTeams = challenge.team_challenges?.map((tc: any) => tc.teams) || [];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -110,21 +106,21 @@ const ChallengeDetail = () => {
                       <Clock className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Time Remaining</div>
-                        <div className="font-semibold">{challenge.timeRemaining}</div>
+                        <div className="font-semibold">{challenge.time_remaining || 'No limit'}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Participating Teams</div>
-                        <div className="font-semibold">{challenge.participatingTeams}</div>
+                        <div className="font-semibold">{participatingTeams.length}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Maximum Points</div>
-                        <div className="font-semibold">{challenge.maxPoints}</div>
+                        <div className="font-semibold">{challenge.max_points}</div>
                       </div>
                     </div>
                   </div>
@@ -146,12 +142,14 @@ const ChallengeDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {challenge.requirements.map((requirement, index) => (
+                  {challenge.requirements?.map((requirement: string, index: number) => (
                     <div key={index} className="flex items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{requirement}</span>
                     </div>
-                  ))}
+                  )) || (
+                    <p className="text-muted-foreground">No specific requirements listed</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -163,7 +161,7 @@ const ChallengeDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {participatingTeams.map((team) => (
+                  {participatingTeams.map((team: any) => (
                     <Link
                       key={team.id}
                       to={`/teams/${team.id}`}
@@ -173,7 +171,7 @@ const ChallengeDetail = () => {
                       <div className="flex-1">
                         <div className="font-medium">{team.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {team.members.length} members • {team.points} points
+                          {team.points} points
                         </div>
                       </div>
                     </Link>

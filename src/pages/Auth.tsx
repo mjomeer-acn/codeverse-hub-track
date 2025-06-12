@@ -15,7 +15,7 @@ const Auth = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, user, profile } = useAuth();
+  const { signIn, user, profile } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -28,7 +28,7 @@ const Auth = () => {
     }
   }, [user, profile, navigate]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent, role: 'admin' | 'team_lead') => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -41,14 +41,6 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent, role: 'admin' | 'team_lead') => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    await signUp(formData.email, formData.password, role);
-    setIsLoading(false);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -57,18 +49,18 @@ const Auth = () => {
             <CardTitle className="text-2xl text-center gradient-text">CodeVerse 2025</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue="admin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="admin">Admin</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="signin" className="space-y-4">
-                <form onSubmit={handleSignIn} className="space-y-4">
+              <TabsContent value="admin" className="space-y-4">
+                <form onSubmit={(e) => handleSignIn(e, 'admin')} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="admin-email">Email</Label>
                     <Input
-                      id="signin-email"
+                      id="admin-email"
                       type="email"
                       placeholder="Enter your email"
                       value={formData.email}
@@ -77,9 +69,9 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="admin-password">Password</Label>
                     <Input
-                      id="signin-password"
+                      id="admin-password"
                       type="password"
                       placeholder="Enter your password"
                       value={formData.password}
@@ -92,86 +84,43 @@ const Auth = () => {
                     className="w-full bg-gradient-primary hover:opacity-90"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Signing in...' : 'Sign In'}
+                    {isLoading ? 'Signing in...' : 'Sign In as Admin'}
                   </Button>
                 </form>
               </TabsContent>
               
-              <TabsContent value="signup" className="space-y-4">
-                <Tabs defaultValue="admin" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="admin">Admin</TabsTrigger>
-                    <TabsTrigger value="team-lead">Team Lead</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="admin">
-                    <form onSubmit={(e) => handleSignUp(e, 'admin')} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-email">Email</Label>
-                        <Input
-                          id="admin-email"
-                          type="email"
-                          placeholder="Enter email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-password">Password</Label>
-                        <Input
-                          id="admin-password"
-                          type="password"
-                          placeholder="Enter password"
-                          value={formData.password}
-                          onChange={(e) => setFormData({...formData, password: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-primary hover:opacity-90"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Creating Account...' : 'Create Admin Account'}
-                      </Button>
-                    </form>
-                  </TabsContent>
-                  
-                  <TabsContent value="team-lead">
-                    <form onSubmit={(e) => handleSignUp(e, 'team_lead')} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="teamlead-email">Email</Label>
-                        <Input
-                          id="teamlead-email"
-                          type="email"
-                          placeholder="Enter email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="teamlead-password">Password</Label>
-                        <Input
-                          id="teamlead-password"
-                          type="password"
-                          placeholder="Enter password"
-                          value={formData.password}
-                          onChange={(e) => setFormData({...formData, password: e.target.value})}
-                          required
-                        />
-                      </div>
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-primary hover:opacity-90"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Creating Account...' : 'Create Team Lead Account'}
-                      </Button>
-                    </form>
-                  </TabsContent>
-                </Tabs>
+              <TabsContent value="team" className="space-y-4">
+                <form onSubmit={(e) => handleSignIn(e, 'team_lead')} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="team-email">Email</Label>
+                    <Input
+                      id="team-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="team-password">Password</Label>
+                    <Input
+                      id="team-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-primary hover:opacity-90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Signing in...' : 'Sign In as Team Lead'}
+                  </Button>
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>
