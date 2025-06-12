@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import DarkModeToggle from './DarkModeToggle';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +46,7 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            <DarkModeToggle />
             <Button 
               asChild 
               variant="outline" 
@@ -75,6 +77,10 @@ const Navbar = () => {
                     {item.name}
                   </Link>
                 ))}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Dark Mode</span>
+                  <DarkModeToggle />
+                </div>
                 <Button 
                   asChild 
                   className="w-full bg-gradient-primary hover:opacity-90"
