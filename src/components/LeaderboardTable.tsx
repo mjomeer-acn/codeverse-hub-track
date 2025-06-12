@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Users } from 'lucide-react';
 import { leaderboardService } from '@/services/supabaseService';
@@ -8,6 +8,7 @@ import { leaderboardService } from '@/services/supabaseService';
 const LeaderboardTable = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -15,12 +16,17 @@ const LeaderboardTable = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      console.log('Fetching leaderboard...');
+      setLoading(true);
+      setError(null);
+      console.log('Leaderboard: Starting to fetch leaderboard data...');
+      
       const data = await leaderboardService.getLeaderboard();
-      console.log('Fetched leaderboard:', data);
+      console.log('Leaderboard: Received leaderboard data:', data);
+      
       setLeaderboard(data || []);
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      console.error('Leaderboard: Error fetching leaderboard:', error);
+      setError('Failed to load leaderboard. Please try again.');
       setLeaderboard([]);
     } finally {
       setLoading(false);
@@ -30,7 +36,26 @@ const LeaderboardTable = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading leaderboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button 
+            onClick={fetchLeaderboard}
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

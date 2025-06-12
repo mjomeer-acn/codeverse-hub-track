@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Trophy, Target, Calendar } from 'lucide-react';
-import { teamsService, challengesService, leaderboardService } from '@/services/supabaseService';
+import { statsService } from '@/services/supabaseService';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -13,34 +13,29 @@ const AdminDashboard = () => {
     daysRemaining: 7
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [teams, challenges, leaderboardEntries] = await Promise.all([
-          teamsService.getTeams(),
-          challengesService.getChallenges(true),
-          leaderboardService.getLeaderboardEntries()
-        ]);
-
-        const activeChallenges = challenges.filter(c => c.status === 'active').length;
-        const totalPointsAwarded = leaderboardEntries.reduce((sum, entry) => sum + entry.points, 0);
-
-        setStats({
-          totalTeams: teams.length,
-          activeChallenges,
-          totalPointsAwarded,
-          daysRemaining: 7 // This could be calculated based on event end date
-        });
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Admin Dashboard: Fetching stats...');
+      
+      const statsData = await statsService.getDashboardStats();
+      console.log('Admin Dashboard: Received stats:', statsData);
+      
+      setStats(statsData);
+    } catch (error) {
+      console.error('Admin Dashboard: Error fetching stats:', error);
+      setError('Failed to load dashboard statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const statsData = [
     { title: 'Total Teams', value: stats.totalTeams.toString(), icon: Users, color: 'text-blue-600' },
@@ -61,7 +56,22 @@ const AdminDashboard = () => {
 
           {loading ? (
             <div className="flex items-center justify-center min-h-[50vh]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="text-center">
+                <p className="text-red-500 mb-4">{error}</p>
+                <button 
+                  onClick={fetchStats}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+                >
+                  Try Again
+                </button>
+              </div>
             </div>
           ) : (
             <>

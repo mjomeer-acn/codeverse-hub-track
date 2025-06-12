@@ -12,23 +12,33 @@ const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [challenge, setChallenge] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchChallengeData = async () => {
-      if (!id) return;
-      
-      try {
-        const challengeData = await challengesService.getChallengeById(id);
-        setChallenge(challengeData);
-      } catch (error) {
-        console.error('Error fetching challenge data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchChallengeData();
+    if (id) {
+      fetchChallengeData();
+    }
   }, [id]);
+
+  const fetchChallengeData = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Challenge Detail: Fetching challenge with ID:', id);
+      
+      const challengeData = await challengesService.getChallengeById(id);
+      console.log('Challenge Detail: Received challenge data:', challengeData);
+      
+      setChallenge(challengeData);
+    } catch (error) {
+      console.error('Challenge Detail: Error fetching challenge:', error);
+      setError('Failed to load challenge details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -45,7 +55,36 @@ const ChallengeDetail = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading challenge details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <p className="text-red-500 mb-4">{error}</p>
+              <div className="space-x-4">
+                <button 
+                  onClick={fetchChallengeData}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+                >
+                  Try Again
+                </button>
+                <Button asChild variant="outline">
+                  <Link to="/challenges">Back to Challenges</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -87,7 +126,7 @@ const ChallengeDetail = () => {
           <Card>
             <CardHeader>
               <div className="flex items-start space-x-4">
-                <div className="text-6xl">{challenge.icon}</div>
+                <div className="text-6xl">{challenge.icon || '🚀'}</div>
                 <div className="flex-1">
                   <CardTitle className="text-3xl font-bold gradient-text mb-2">
                     {challenge.title}
@@ -113,7 +152,7 @@ const ChallengeDetail = () => {
                       <Users className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Participating Teams</div>
-                        <div className="font-semibold">{participatingTeams.length}</div>
+                        <div className="font-semibold">{challenge.participating_teams || 0}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -141,16 +180,18 @@ const ChallengeDetail = () => {
                 <CardTitle>Challenge Requirements</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {challenge.requirements?.map((requirement: string, index: number) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>{requirement}</span>
-                    </div>
-                  )) || (
-                    <p className="text-muted-foreground">No specific requirements listed</p>
-                  )}
-                </div>
+                {challenge.requirements && challenge.requirements.length > 0 ? (
+                  <ul className="space-y-2">
+                    {challenge.requirements.map((requirement: string, index: number) => (
+                      <li key={index} className="flex items-start space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{requirement}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No specific requirements listed</p>
+                )}
               </CardContent>
             </Card>
 
@@ -160,28 +201,25 @@ const ChallengeDetail = () => {
                 <CardTitle>Participating Teams</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {participatingTeams.map((team: any) => (
-                    <Link
-                      key={team.id}
-                      to={`/teams/${team.id}`}
-                      className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-                    >
-                      <span className="text-2xl">{team.avatar}</span>
-                      <div className="flex-1">
-                        <div className="font-medium">{team.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {team.points} points
+                {participatingTeams.length > 0 ? (
+                  <div className="space-y-3">
+                    {participatingTeams.map((team: any) => (
+                      <div key={team.id} className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+                        <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {team.avatar || '🧠'}
+                        </div>
+                        <div>
+                          <div className="font-medium">{team.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {team.points || 0} points
+                          </div>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-                  {participatingTeams.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">
-                      No teams participating yet
-                    </p>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No teams participating yet</p>
+                )}
               </CardContent>
             </Card>
           </div>

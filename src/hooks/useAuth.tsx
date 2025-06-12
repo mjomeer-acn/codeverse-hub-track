@@ -31,34 +31,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          if (initialSession?.user) {
+            setSession(initialSession);
+            setUser(initialSession.user);
+            await fetchProfile(initialSession.user.id);
+          } else {
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    });
+    };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+            setLoading(false);
+          }
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -85,7 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // First check if user exists in profiles table
+      setLoading(true);
+      
+      // First check if user exists in profiles table with correct credentials
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -100,18 +122,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: "Invalid email or password",
           variant: "destructive",
         });
+        setLoading(false);
         return { error };
       }
 
-      // If profile exists, sign in with Supabase Auth using the profile ID
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      // Create or sign in user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: profileData.id, // Use profile ID as password for Supabase Auth
       });
 
       if (authError) {
         // If auth user doesn't exist, create one
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email,
           password: profileData.id,
           options: {
@@ -127,25 +150,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             description: "Authentication error",
             variant: "destructive",
           });
+          setLoading(false);
           return { error: signUpError };
         }
+
+        // Set the profile after successful signup
+        setProfile(profileData);
+        setUser(signUpData.user);
+        setSession(signUpData.session);
+      } else {
+        setProfile(profileData);
+        setUser(authData.user);
+        setSession(authData.session);
       }
 
+      toast({
+        title: "Success",
+        description: "Signed in successfully",
+      });
+
+      setLoading(false);
       return { error: null };
     } catch (error) {
       const authError = error as Error;
+      console.error('Sign in error:', authError);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
       });
+      setLoading(false);
       return { error: authError };
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to sign out",
+          variant: "destructive",
+        });
+      } else {
+        setUser(null);
+        setProfile(null);
+        setSession(null);
+        toast({
+          title: "Success",
+          description: "Signed out successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
       toast({
         title: "Error",
         description: "Failed to sign out",

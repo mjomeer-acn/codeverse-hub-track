@@ -9,44 +9,31 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import { challengesService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
 
 const AdminChallenges = () => {
   const [challenges, setChallenges] = useState<any[]>([]);
   const [visibilityChanges, setVisibilityChanges] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchChallenges();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('challenges-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'challenges'
-        },
-        () => {
-          fetchChallenges();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchChallenges = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      console.log('Admin Challenges: Fetching challenges...');
+      
       const data = await challengesService.getChallenges(true);
+      console.log('Admin Challenges: Received challenges:', data);
+      
       setChallenges(data);
     } catch (error) {
-      console.error('Error fetching challenges:', error);
+      console.error('Admin Challenges: Error fetching challenges:', error);
+      setError('Failed to load challenges');
       toast({
         title: "Error",
         description: "Failed to fetch challenges",
@@ -66,6 +53,8 @@ const AdminChallenges = () => {
 
   const handleSaveChanges = async () => {
     try {
+      console.log('Admin Challenges: Saving visibility changes:', visibilityChanges);
+      
       const updatePromises = Object.entries(visibilityChanges).map(([challengeId, isVisible]) =>
         challengesService.updateChallenge(challengeId, { is_visible: isVisible })
       );
@@ -80,7 +69,7 @@ const AdminChallenges = () => {
       setVisibilityChanges({});
       fetchChallenges();
     } catch (error) {
-      console.error('Error updating challenges:', error);
+      console.error('Admin Challenges: Error updating challenges:', error);
       toast({
         title: "Error",
         description: "Failed to update challenge visibility",
@@ -97,7 +86,31 @@ const AdminChallenges = () => {
         <AdminSidebar />
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading challenges...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <AdminSidebar />
+        <main className="flex-1 p-6">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button 
+                onClick={fetchChallenges}
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         </main>
       </div>
@@ -150,7 +163,7 @@ const AdminChallenges = () => {
                         <span className="font-medium">Max Points:</span> {challenge.max_points}
                       </div>
                       <div>
-                        <span className="font-medium">Participants:</span> {challenge.participating_teams}
+                        <span className="font-medium">Participants:</span> {challenge.participating_teams || 0}
                       </div>
                     </div>
 
@@ -188,6 +201,12 @@ const AdminChallenges = () => {
               );
             })}
           </div>
+
+          {challenges.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No challenges found</p>
+            </div>
+          )}
         </div>
       </main>
     </div>
