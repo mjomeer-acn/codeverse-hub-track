@@ -3,27 +3,59 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Award, ArrowUpDown } from 'lucide-react';
-import { dataService, Team } from '@/services/dataService';
+import { leaderboardService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const LeaderboardTable = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [teams, setTeams] = useState<(Team & { totalPoints: number })[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const leaderboardData = await dataService.getLeaderboard();
-        setTeams(leaderboardData);
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchLeaderboard();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('leaderboard-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leaderboard_entries'
+        },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'teams'
+        },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const leaderboardData = await leaderboardService.getLeaderboard();
+      setTeams(leaderboardData);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sortedTeams = [...teams].sort((a, b) => {
     return sortOrder === 'desc' ? b.totalPoints - a.totalPoints : a.totalPoints - b.totalPoints;
@@ -85,22 +117,19 @@ const LeaderboardTable = () => {
               }`}
             >
               <div className="flex items-center space-x-4">
-                {/* Rank */}
                 <div className="flex items-center justify-center w-12 h-12">
                   {getRankIcon(index)}
                 </div>
                 
-                {/* Team Info */}
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">{team.avatar}</div>
                   <div>
                     <h3 className="font-semibold text-lg">{team.name}</h3>
-                    <p className="text-sm text-muted-foreground">{team.members.length} members</p>
+                    <p className="text-sm text-muted-foreground">{team.members?.length || 0} members</p>
                   </div>
                 </div>
               </div>
 
-              {/* Points */}
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <div className={`text-2xl font-bold text-white px-3 py-1 rounded-full ${getRankBadgeColor(index)}`}>

@@ -2,26 +2,47 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import TeamCard from '@/components/TeamCard';
-import { dataService, Team } from '@/services/dataService';
+import { teamsService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const Teams = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const teamsData = await dataService.getTeams();
-        setTeams(teamsData);
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTeams();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('teams-public-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'teams'
+        },
+        () => {
+          fetchTeams();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const teamsData = await teamsService.getTeams();
+      setTeams(teamsData);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (

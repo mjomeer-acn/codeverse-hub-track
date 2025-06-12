@@ -1,51 +1,108 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { dataService } from '@/services/dataService';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
+import { challengesService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminChallenges = () => {
-  const [visibilityChanges, setVisibilityChanges] = useState<Record<number, boolean>>({});
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [visibilityChanges, setVisibilityChanges] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const { data: challenges, isLoading } = useQuery({
-    queryKey: ['admin-all-challenges'],
-    queryFn: async () => {
-      // Get all challenges including hidden ones for admin
-      const mockData = await import('@/data/mockData.json');
-      return mockData.challenges;
-    },
-  });
+  useEffect(() => {
+    fetchChallenges();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('challenges-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'challenges'
+        },
+        () => {
+          fetchChallenges();
+        }
+      )
+      .subscribe();
 
-  const handleVisibilityChange = (challengeId: number, isVisible: boolean) => {
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchChallenges = async () => {
+    try {
+      const data = await challengesService.getChallenges(true);
+      setChallenges(data);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch challenges",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVisibilityChange = (challengeId: string, isVisible: boolean) => {
     setVisibilityChanges(prev => ({
       ...prev,
       [challengeId]: isVisible
     }));
   };
 
-  const handleSaveChanges = () => {
-    // In a real app, this would make API calls to update challenge visibility
-    console.log('Saving visibility changes:', visibilityChanges);
-    
-    toast({
-      title: "Success",
-      description: "Challenge visibility updated successfully",
-    });
+  const handleSaveChanges = async () => {
+    try {
+      const updatePromises = Object.entries(visibilityChanges).map(([challengeId, isVisible]) =>
+        challengesService.updateChallenge(challengeId, { is_visible: isVisible })
+      );
 
-    setVisibilityChanges({});
+      await Promise.all(updatePromises);
+
+      toast({
+        title: "Success",
+        description: "Challenge visibility updated successfully",
+      });
+
+      setVisibilityChanges({});
+      fetchChallenges();
+    } catch (error) {
+      console.error('Error updating challenges:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update challenge visibility",
+        variant: "destructive",
+      });
+    }
   };
 
   const hasChanges = Object.keys(visibilityChanges).length > 0;
 
-  if (isLoading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <AdminSidebar />
+        <main className="flex-1 p-6">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -66,8 +123,8 @@ const AdminChallenges = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {challenges?.map((challenge: any) => {
-              const currentVisibility = visibilityChanges[challenge.id] ?? challenge.isVisible;
+            {challenges.map((challenge) => {
+              const currentVisibility = visibilityChanges[challenge.id] ?? challenge.is_visible;
               
               return (
                 <Card key={challenge.id}>
@@ -90,10 +147,10 @@ const AdminChallenges = () => {
                         <span className="font-medium">Category:</span> {challenge.category}
                       </div>
                       <div>
-                        <span className="font-medium">Max Points:</span> {challenge.maxPoints}
+                        <span className="font-medium">Max Points:</span> {challenge.max_points}
                       </div>
                       <div>
-                        <span className="font-medium">Participants:</span> {challenge.participatingTeams}
+                        <span className="font-medium">Participants:</span> {challenge.participating_teams}
                       </div>
                     </div>
 
@@ -116,7 +173,7 @@ const AdminChallenges = () => {
                       </p>
                     </div>
 
-                    {challenge.requirements && (
+                    {challenge.requirements && challenge.requirements.length > 0 && (
                       <div>
                         <span className="font-medium text-sm">Requirements:</span>
                         <ul className="text-xs text-muted-foreground mt-1 space-y-1">

@@ -2,26 +2,47 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ChallengeCard from '@/components/ChallengeCard';
-import { dataService, Challenge } from '@/services/dataService';
+import { challengesService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const Challenges = () => {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [challenges, setChallenges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const challengesData = await dataService.getChallenges();
-        setChallenges(challengesData);
-      } catch (error) {
-        console.error('Error fetching challenges:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchChallenges();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('challenges-public-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'challenges'
+        },
+        () => {
+          fetchChallenges();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchChallenges = async () => {
+    try {
+      const challengesData = await challengesService.getChallenges();
+      setChallenges(challengesData);
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (

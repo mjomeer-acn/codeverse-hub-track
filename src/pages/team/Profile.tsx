@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import TeamSidebar from '@/components/team/TeamSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,34 +9,106 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Upload } from 'lucide-react';
+import { teamsService } from '@/services/supabaseService';
+import { useAuth } from '@/hooks/useAuth';
 
 const TeamProfile = () => {
-  const [teamName, setTeamName] = useState('Neural Ninjas');
-  const [description, setDescription] = useState('A dynamic team of AI enthusiasts pushing the boundaries of machine learning and neural networks.');
+  const { teamId } = useParams();
+  const [team, setTeam] = useState<any>(null);
+  const [teamName, setTeamName] = useState('');
+  const [description, setDescription] = useState('');
   const [teamPhoto, setTeamPhoto] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSave = () => {
-    // In a real app, this would make an API call
-    console.log('Saving profile:', { teamName, description, teamPhoto });
-    
-    toast({
-      title: "Success",
-      description: "Team profile updated successfully",
-    });
-  };
+  useEffect(() => {
+    if (teamId) {
+      fetchTeam();
+    }
+  }, [teamId]);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // In a real app, this would upload to a server
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setTeamPhoto(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const fetchTeam = async () => {
+    try {
+      const data = await teamsService.getTeamById(teamId!);
+      setTeam(data);
+      setTeamName(data.name);
+      setDescription(data.description || '');
+      setTeamPhoto(data.photo || '');
+    } catch (error) {
+      console.error('Error fetching team:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch team data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleSave = async () => {
+    try {
+      await teamsService.updateTeam(teamId!, {
+        name: teamName,
+        description,
+        photo: teamPhoto
+      });
+      
+      toast({
+        title: "Success",
+        description: "Team profile updated successfully",
+      });
+      
+      fetchTeam();
+    } catch (error) {
+      console.error('Error updating team:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update team profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const photoUrl = await teamsService.uploadTeamPhoto(teamId!, file);
+      setTeamPhoto(photoUrl);
+      
+      toast({
+        title: "Success",
+        description: "Photo uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload photo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <TeamSidebar />
+        <main className="flex-1 p-6">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -107,15 +180,16 @@ const TeamProfile = () => {
                     accept="image/*"
                     onChange={handlePhotoUpload}
                     className="mt-1"
+                    disabled={uploading}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Upload a high-quality photo of your team (max 5MB)
                   </p>
                 </div>
 
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" disabled={uploading}>
                   <Upload className="mr-2 h-4 w-4" />
-                  Upload New Photo
+                  {uploading ? 'Uploading...' : 'Upload New Photo'}
                 </Button>
               </CardContent>
             </Card>

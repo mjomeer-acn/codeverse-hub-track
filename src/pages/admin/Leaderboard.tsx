@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,60 +7,125 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useQuery } from '@tanstack/react-query';
-import { dataService } from '@/services/dataService';
 import { useToast } from '@/hooks/use-toast';
+import { teamsService, challengesService, leaderboardService } from '@/services/supabaseService';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLeaderboard = () => {
+  const [teams, setTeams] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [selectedTeam, setSelectedTeam] = useState('');
   const [selectedChallenge, setSelectedChallenge] = useState('');
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const { data: teams } = useQuery({
-    queryKey: ['admin-teams'],
-    queryFn: dataService.getTeams,
-  });
+  useEffect(() => {
+    fetchData();
+    
+    // Set up real-time subscriptions
+    const leaderboardChannel = supabase
+      .channel('leaderboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leaderboard_entries'
+        },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
 
-  const { data: challenges } = useQuery({
-    queryKey: ['admin-challenges'],
-    queryFn: dataService.getChallenges,
-  });
+    const teamsChannel = supabase
+      .channel('teams-points-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'teams'
+        },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
 
-  const { data: leaderboard } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: dataService.getLeaderboard,
-  });
+    return () => {
+      supabase.removeChannel(leaderboardChannel);
+      supabase.removeChannel(teamsChannel);
+    };
+  }, []);
 
-  const handleAssignPoints = () => {
-    if (!selectedTeam || !points || !selectedChallenge) {
+  const fetchData = async () => {
+    try {
+      const [teamsData, challengesData, leaderboardData] = await Promise.all([
+        teamsService.getTeams(),
+        challengesService.getChallenges(true),
+        leaderboardService.getLeaderboard()
+      ]);
+      
+      setTeams(teamsData);
+      setChallenges(challengesData);
+      setLeaderboard(leaderboardData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const data = await leaderboardService.getLeaderboard();
+      setLeaderboard(data);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    }
+  };
+
+  const handleAssignPoints = async () => {
+    if (!selectedTeam || !points || !user) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in team and points fields",
         variant: "destructive",
       });
       return;
     }
 
-    // In a real app, this would make an API call to update points
-    console.log('Assigning points:', {
-      teamId: selectedTeam,
-      challengeId: selectedChallenge,
-      points: parseInt(points),
-      description
-    });
+    try {
+      await leaderboardService.assignPoints({
+        team_id: selectedTeam,
+        challenge_id: selectedChallenge || undefined,
+        points: parseInt(points),
+        description,
+        assigned_by: user.id
+      });
 
-    toast({
-      title: "Success",
-      description: "Points assigned successfully",
-    });
+      toast({
+        title: "Success",
+        description: "Points assigned successfully",
+      });
 
-    // Reset form
-    setSelectedTeam('');
-    setSelectedChallenge('');
-    setPoints('');
-    setDescription('');
+      // Reset form
+      setSelectedTeam('');
+      setSelectedChallenge('');
+      setPoints('');
+      setDescription('');
+      
+    } catch (error) {
+      console.error('Error assigning points:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign points",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -74,7 +139,6 @@ const AdminLeaderboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Assign Points Form */}
             <Card>
               <CardHeader>
                 <CardTitle>Assign Points</CardTitle>
@@ -87,8 +151,8 @@ const AdminLeaderboard = () => {
                       <SelectValue placeholder="Select a team" />
                     </SelectTrigger>
                     <SelectContent>
-                      {teams?.map((team) => (
-                        <SelectItem key={team.id} value={team.id.toString()}>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
                           {team.name}
                         </SelectItem>
                       ))}
@@ -97,14 +161,14 @@ const AdminLeaderboard = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="challenge">Challenge *</Label>
+                  <Label htmlFor="challenge">Challenge (Optional)</Label>
                   <Select value={selectedChallenge} onValueChange={setSelectedChallenge}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a challenge" />
                     </SelectTrigger>
                     <SelectContent>
-                      {challenges?.map((challenge) => (
-                        <SelectItem key={challenge.id} value={challenge.id.toString()}>
+                      {challenges.map((challenge) => (
+                        <SelectItem key={challenge.id} value={challenge.id}>
                           {challenge.title}
                         </SelectItem>
                       ))}
@@ -140,21 +204,20 @@ const AdminLeaderboard = () => {
               </CardContent>
             </Card>
 
-            {/* Current Leaderboard */}
             <Card>
               <CardHeader>
                 <CardTitle>Current Leaderboard</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {leaderboard?.map((team, index) => (
+                  {leaderboard.map((team, index) => (
                     <div key={team.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="font-bold text-lg">#{index + 1}</div>
                         <div>
                           <div className="font-medium">{team.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {team.members.length} members
+                            {team.members?.length || 0} members
                           </div>
                         </div>
                       </div>

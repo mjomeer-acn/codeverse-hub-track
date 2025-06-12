@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import DarkModeToggle from './DarkModeToggle';
+import { useAuth } from '@/hooks/useAuth';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -18,6 +20,11 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsOpen(false);
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -47,13 +54,29 @@ const Navbar = () => {
               </Link>
             ))}
             <DarkModeToggle />
-            <Button 
-              asChild 
-              variant="outline" 
-              className="border-codeverse-accent text-codeverse-accent hover:bg-codeverse-accent hover:text-white"
-            >
-              <Link to="/login">Login</Link>
-            </Button>
+            
+            {user && profile ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-muted-foreground">
+                  {profile.role === 'admin' ? 'Admin' : 'Team Lead'}
+                </span>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="border-codeverse-accent text-codeverse-accent hover:bg-codeverse-accent hover:text-white"
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                asChild 
+                variant="outline" 
+                className="border-codeverse-accent text-codeverse-accent hover:bg-codeverse-accent hover:text-white"
+              >
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -81,12 +104,27 @@ const Navbar = () => {
                   <span className="text-sm text-muted-foreground">Dark Mode</span>
                   <DarkModeToggle />
                 </div>
-                <Button 
-                  asChild 
-                  className="w-full bg-gradient-primary hover:opacity-90"
-                >
-                  <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
-                </Button>
+                
+                {user && profile ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Signed in as {profile.role === 'admin' ? 'Admin' : 'Team Lead'}
+                    </p>
+                    <Button 
+                      onClick={handleSignOut}
+                      className="w-full bg-gradient-primary hover:opacity-90"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    asChild 
+                    className="w-full bg-gradient-primary hover:opacity-90"
+                  >
+                    <Link to="/auth" onClick={() => setIsOpen(false)}>Sign In</Link>
+                  </Button>
+                )}
               </div>
             </SheetContent>
           </Sheet>
