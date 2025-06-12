@@ -22,10 +22,17 @@ interface TeamCardProps {
     challenges: number[];
     avatar: string;
     photo?: string;
+    // Support for Supabase data structure
+    team_members?: TeamMember[];
+    team_challenges?: { challenge_id: string }[];
   };
 }
 
 const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
+  // Handle both mock data and Supabase data structures
+  const members = team.members || team.team_members || [];
+  const challengeCount = team.challenges?.length || team.team_challenges?.length || 0;
+
   return (
     <Card className="w-full hover:shadow-lg transition-all duration-300 hover:scale-[1.02] group">
       <CardHeader className="relative">
@@ -45,9 +52,9 @@ const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
               <CardTitle className="text-xl font-bold">{team.name}</CardTitle>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>{team.members.length} members</span>
+                <span>{members.length} members</span>
                 <Trophy className="h-4 w-4 ml-2" />
-                <span>{team.points.toLocaleString()} points</span>
+                <span>{team.points?.toLocaleString() || 0} points</span>
               </div>
             </div>
           </div>
@@ -64,18 +71,22 @@ const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
         <div>
           <h4 className="font-semibold text-sm mb-2">Team Members</h4>
           <div className="flex flex-wrap gap-2">
-            {team.members.map((member, index) => (
-              <div 
-                key={index}
-                className="flex items-center space-x-2 bg-muted/50 rounded-lg px-2 py-1"
-              >
-                <span className="text-sm">{member.avatar}</span>
-                <div className="text-xs">
-                  <div className="font-medium">{member.name}</div>
-                  <div className="text-muted-foreground">{member.role}</div>
+            {members.length > 0 ? (
+              members.map((member, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center space-x-2 bg-muted/50 rounded-lg px-2 py-1"
+                >
+                  <span className="text-sm">{member.avatar}</span>
+                  <div className="text-xs">
+                    <div className="font-medium">{member.name}</div>
+                    <div className="text-muted-foreground">{member.role}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">No members added yet</p>
+            )}
           </div>
         </div>
 
@@ -83,7 +94,7 @@ const TeamCard: React.FC<TeamCardProps> = ({ team }) => {
         <div>
           <h4 className="font-semibold text-sm mb-2">Active Challenges</h4>
           <Badge variant="outline" className="text-xs">
-            {team.challenges.length} challenges
+            {challengeCount} challenges
           </Badge>
         </div>
 
