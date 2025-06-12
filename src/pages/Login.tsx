@@ -59,16 +59,6 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Back to Home */}
-        <div className="mb-6 text-center">
-          <Button variant="ghost" asChild className="text-white hover:bg-white/10">
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Link>
-          </Button>
-        </div>
-
         {/* Login Form */}
         <Card className="bg-white/95 backdrop-blur-lg">
           <CardHeader>
