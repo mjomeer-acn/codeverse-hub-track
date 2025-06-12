@@ -1,148 +1,124 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Trophy, Medal, Award, ArrowUpDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Users } from 'lucide-react';
 import { leaderboardService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
 
 const LeaderboardTable = () => {
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [teams, setTeams] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLeaderboard();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('leaderboard-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leaderboard_entries'
-        },
-        () => {
-          fetchLeaderboard();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'teams'
-        },
-        () => {
-          fetchLeaderboard();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchLeaderboard = async () => {
     try {
-      const leaderboardData = await leaderboardService.getLeaderboard();
-      setTeams(leaderboardData);
+      console.log('Fetching leaderboard...');
+      const data = await leaderboardService.getLeaderboard();
+      console.log('Fetched leaderboard:', data);
+      setLeaderboard(data || []);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
+      setLeaderboard([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const sortedTeams = [...teams].sort((a, b) => {
-    return sortOrder === 'desc' ? b.totalPoints - a.totalPoints : a.totalPoints - b.totalPoints;
-  });
-
-  const getRankIcon = (index: number) => {
-    switch (index) {
-      case 0: return <Trophy className="h-6 w-6 text-yellow-500" />;
-      case 1: return <Medal className="h-6 w-6 text-gray-400" />;
-      case 2: return <Award className="h-6 w-6 text-amber-600" />;
-      default: return <span className="h-6 w-6 flex items-center justify-center text-sm font-bold text-muted-foreground">#{index + 1}</span>;
-    }
-  };
-
-  const getRankBadgeColor = (index: number) => {
-    switch (index) {
-      case 0: return 'bg-gradient-to-r from-yellow-400 to-yellow-600';
-      case 1: return 'bg-gradient-to-r from-gray-300 to-gray-500';
-      case 2: return 'bg-gradient-to-r from-amber-400 to-amber-600';
-      default: return 'bg-gradient-primary';
-    }
-  };
-
   if (loading) {
     return (
-      <Card className="w-full">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold gradient-text">Leaderboard</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-            className="flex items-center gap-2"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            Sort by Points
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {sortedTeams.map((team, index) => (
-            <div
-              key={team.id}
-              className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
-                index < 3 ? 'bg-gradient-card border-codeverse-accent/30' : 'bg-card'
-              }`}
-            >
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12">
-                  {getRankIcon(index)}
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">{team.avatar}</div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{team.name}</h3>
-                    <p className="text-sm text-muted-foreground">{team.members?.length || 0} members</p>
-                  </div>
-                </div>
-              </div>
+  const getRankBadgeColor = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return 'bg-yellow-500 text-white';
+      case 2:
+        return 'bg-gray-400 text-white';
+      case 3:
+        return 'bg-amber-600 text-white';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
 
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <div className={`text-2xl font-bold text-white px-3 py-1 rounded-full ${getRankBadgeColor(index)}`}>
-                    {team.totalPoints.toLocaleString()}
+  const getRankIcon = (rank: number) => {
+    if (rank <= 3) {
+      return <Trophy className="h-4 w-4" />;
+    }
+    return null;
+  };
+
+  return (
+    <div className="space-y-4">
+      {leaderboard && leaderboard.length > 0 ? (
+        leaderboard.map((team, index) => {
+          const rank = index + 1;
+          return (
+            <Card key={team.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Badge className={`${getRankBadgeColor(rank)} flex items-center space-x-1`}>
+                      {getRankIcon(rank)}
+                      <span>#{rank}</span>
+                    </Badge>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {team.avatar || '🧠'}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">{team.name || 'Unnamed Team'}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span>{team.members?.length || 0} members</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">points</div>
+                  
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">
+                      {team.totalPoints || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground">points</div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+
+                {team.description && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">{team.description}</p>
+                  </div>
+                )}
+
+                {team.members && team.members.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex flex-wrap gap-2">
+                      {team.members.map((member: any, memberIndex: number) => (
+                        <div key={memberIndex} className="bg-muted px-2 py-1 rounded text-sm">
+                          {member.avatar} {member.name} - {member.role}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No teams found in leaderboard</p>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 

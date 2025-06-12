@@ -28,7 +28,7 @@ const Auth = () => {
     }
   }, [user, profile, navigate]);
 
-  const handleSignIn = async (e: React.FormEvent, role: 'admin' | 'team_lead') => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -47,22 +47,23 @@ const Auth = () => {
         <Card className="bg-white/95 backdrop-blur-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-center gradient-text">CodeVerse 2025</CardTitle>
+            <p className="text-center text-muted-foreground">Sign in to your account</p>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="admin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="admin">Admin</TabsTrigger>
-                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="team">Team Lead</TabsTrigger>
               </TabsList>
               
               <TabsContent value="admin" className="space-y-4">
-                <form onSubmit={(e) => handleSignIn(e, 'admin')} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="admin-email">Email</Label>
                     <Input
                       id="admin-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your admin email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required
@@ -90,13 +91,13 @@ const Auth = () => {
               </TabsContent>
               
               <TabsContent value="team" className="space-y-4">
-                <form onSubmit={(e) => handleSignIn(e, 'team_lead')} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="team-email">Email</Label>
                     <Input
                       id="team-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your team lead email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required

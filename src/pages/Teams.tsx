@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import TeamCard from '@/components/TeamCard';
 import { teamsService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
 
 const Teams = () => {
   const [teams, setTeams] = useState<any[]>([]);
@@ -11,37 +10,11 @@ const Teams = () => {
 
   useEffect(() => {
     fetchTeams();
-    
-    // Set up real-time subscription with error handling
-    const channel = supabase
-      .channel('teams-public-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'teams'
-        },
-        () => {
-          console.log('Teams data updated, refetching...');
-          fetchTeams();
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to teams changes');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.log('Error subscribing to teams changes');
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchTeams = async () => {
     try {
+      console.log('Fetching teams...');
       const teamsData = await teamsService.getTeams();
       console.log('Fetched teams:', teamsData);
       setTeams(teamsData || []);

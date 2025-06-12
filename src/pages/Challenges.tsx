@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ChallengeCard from '@/components/ChallengeCard';
 import { challengesService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
 
 const Challenges = () => {
   const [challenges, setChallenges] = useState<any[]>([]);
@@ -11,34 +10,17 @@ const Challenges = () => {
 
   useEffect(() => {
     fetchChallenges();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('challenges-public-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'challenges'
-        },
-        () => {
-          fetchChallenges();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchChallenges = async () => {
     try {
+      console.log('Fetching challenges...');
       const challengesData = await challengesService.getChallenges();
-      setChallenges(challengesData);
+      console.log('Fetched challenges:', challengesData);
+      setChallenges(challengesData || []);
     } catch (error) {
       console.error('Error fetching challenges:', error);
+      setChallenges([]);
     } finally {
       setLoading(false);
     }
@@ -70,9 +52,15 @@ const Challenges = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {challenges.map((challenge) => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
+            {challenges && challenges.length > 0 ? (
+              challenges.map((challenge) => (
+                <ChallengeCard key={challenge.id} challenge={challenge} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No challenges found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
