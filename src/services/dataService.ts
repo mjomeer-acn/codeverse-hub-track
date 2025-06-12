@@ -71,16 +71,40 @@ export const dataService = {
     return team ? team as Team : null;
   },
 
+  async updateTeam(id: number, updates: Partial<Team>): Promise<Team> {
+    await delay(300);
+    // In a real app, this would update the database
+    const team = mockData.teams.find(t => t.id === id);
+    if (team) {
+      Object.assign(team, updates);
+    }
+    return team as Team;
+  },
+
   // Challenges
   async getChallenges(): Promise<Challenge[]> {
     await delay(300);
     return mockData.challenges.filter(challenge => challenge.isVisible) as Challenge[];
   },
 
+  async getAllChallenges(): Promise<Challenge[]> {
+    await delay(300);
+    return mockData.challenges as Challenge[];
+  },
+
   async getChallengeById(id: number): Promise<Challenge | null> {
     await delay(300);
     const challenge = mockData.challenges.find(challenge => challenge.id === id);
     return challenge ? challenge as Challenge : null;
+  },
+
+  async updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge> {
+    await delay(300);
+    const challenge = mockData.challenges.find(c => c.id === id);
+    if (challenge) {
+      Object.assign(challenge, updates);
+    }
+    return challenge as Challenge;
   },
 
   // Leaderboard
@@ -92,6 +116,26 @@ export const dataService = {
       totalPoints: team.points
     }));
     return leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
+  },
+
+  // Dashboard Stats
+  async getDashboardStats(): Promise<{
+    totalTeams: number;
+    activeChallenges: number;
+    totalPointsAwarded: number;
+    daysRemaining: number;
+  }> {
+    await delay(300);
+    const teams = mockData.teams as Team[];
+    const challenges = mockData.challenges.filter(c => c.isVisible) as Challenge[];
+    const totalPoints = teams.reduce((sum, team) => sum + team.points, 0);
+    
+    return {
+      totalTeams: teams.length,
+      activeChallenges: challenges.length,
+      totalPointsAwarded: totalPoints,
+      daysRemaining: 7
+    };
   },
 
   // Get challenges for a team
@@ -111,5 +155,31 @@ export const dataService = {
     return mockData.teams.filter(team => 
       team.challenges.includes(challengeId)
     ) as Team[];
+  },
+
+  // Team members
+  async addTeamMember(teamId: number, member: TeamMember): Promise<void> {
+    await delay(300);
+    const team = mockData.teams.find(t => t.id === teamId);
+    if (team && team.members.length < 4) {
+      team.members.push(member);
+    }
+  },
+
+  async removeTeamMember(teamId: number, memberIndex: number): Promise<void> {
+    await delay(300);
+    const team = mockData.teams.find(t => t.id === teamId);
+    if (team) {
+      team.members.splice(memberIndex, 1);
+    }
+  },
+
+  // Assign points
+  async assignPoints(teamId: number, points: number, description?: string): Promise<void> {
+    await delay(300);
+    const team = mockData.teams.find(t => t.id === teamId);
+    if (team) {
+      team.points += points;
+    }
   }
 };

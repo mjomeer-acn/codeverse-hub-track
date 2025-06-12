@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Trophy, Target, Calendar } from 'lucide-react';
-import { statsService } from '@/services/supabaseService';
+import { dataService } from '@/services/dataService';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
       setError(null);
       console.log('Admin Dashboard: Fetching stats...');
       
-      const statsData = await statsService.getDashboardStats();
+      const statsData = await dataService.getDashboardStats();
       console.log('Admin Dashboard: Received stats:', statsData);
       
       setStats(statsData);

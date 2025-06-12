@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Users } from 'lucide-react';
-import { leaderboardService } from '@/services/supabaseService';
+import { dataService, Team } from '@/services/dataService';
 
 const LeaderboardTable = () => {
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<(Team & { totalPoints: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,7 @@ const LeaderboardTable = () => {
       setError(null);
       console.log('Leaderboard: Starting to fetch leaderboard data...');
       
-      const data = await leaderboardService.getLeaderboard();
+      const data = await dataService.getLeaderboard();
       console.log('Leaderboard: Received leaderboard data:', data);
       
       setLeaderboard(data || []);
@@ -126,7 +126,7 @@ const LeaderboardTable = () => {
                 {team.members && team.members.length > 0 && (
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex flex-wrap gap-2">
-                      {team.members.map((member: any, memberIndex: number) => (
+                      {team.members.map((member, memberIndex) => (
                         <div key={memberIndex} className="bg-muted px-2 py-1 rounded text-sm">
                           {member.avatar} {member.name} - {member.role}
                         </div>

@@ -8,11 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
-import { challengesService } from '@/services/supabaseService';
+import { dataService, Challenge } from '@/services/dataService';
 
 const AdminChallenges = () => {
-  const [challenges, setChallenges] = useState<any[]>([]);
-  const [visibilityChanges, setVisibilityChanges] = useState<Record<string, boolean>>({});
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [visibilityChanges, setVisibilityChanges] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -27,7 +27,7 @@ const AdminChallenges = () => {
       setError(null);
       console.log('Admin Challenges: Fetching challenges...');
       
-      const data = await challengesService.getChallenges(true);
+      const data = await dataService.getAllChallenges();
       console.log('Admin Challenges: Received challenges:', data);
       
       setChallenges(data);
@@ -44,7 +44,7 @@ const AdminChallenges = () => {
     }
   };
 
-  const handleVisibilityChange = (challengeId: string, isVisible: boolean) => {
+  const handleVisibilityChange = (challengeId: number, isVisible: boolean) => {
     setVisibilityChanges(prev => ({
       ...prev,
       [challengeId]: isVisible
@@ -56,7 +56,7 @@ const AdminChallenges = () => {
       console.log('Admin Challenges: Saving visibility changes:', visibilityChanges);
       
       const updatePromises = Object.entries(visibilityChanges).map(([challengeId, isVisible]) =>
-        challengesService.updateChallenge(challengeId, { is_visible: isVisible })
+        dataService.updateChallenge(parseInt(challengeId), { isVisible })
       );
 
       await Promise.all(updatePromises);
@@ -137,7 +137,7 @@ const AdminChallenges = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {challenges.map((challenge) => {
-              const currentVisibility = visibilityChanges[challenge.id] ?? challenge.is_visible;
+              const currentVisibility = visibilityChanges[challenge.id] ?? challenge.isVisible;
               
               return (
                 <Card key={challenge.id}>
@@ -160,10 +160,10 @@ const AdminChallenges = () => {
                         <span className="font-medium">Category:</span> {challenge.category}
                       </div>
                       <div>
-                        <span className="font-medium">Max Points:</span> {challenge.max_points}
+                        <span className="font-medium">Max Points:</span> {challenge.maxPoints}
                       </div>
                       <div>
-                        <span className="font-medium">Participants:</span> {challenge.participating_teams || 0}
+                        <span className="font-medium">Participants:</span> {challenge.participatingTeams || 0}
                       </div>
                     </div>
 
@@ -190,7 +190,7 @@ const AdminChallenges = () => {
                       <div>
                         <span className="font-medium text-sm">Requirements:</span>
                         <ul className="text-xs text-muted-foreground mt-1 space-y-1">
-                          {challenge.requirements.map((req: string, index: number) => (
+                          {challenge.requirements.map((req, index) => (
                             <li key={index}>• {req}</li>
                           ))}
                         </ul>

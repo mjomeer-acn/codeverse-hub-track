@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import TeamCard from '@/components/TeamCard';
-import { teamsService } from '@/services/supabaseService';
+import { dataService, Team } from '@/services/dataService';
 
 const Teams = () => {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +19,7 @@ const Teams = () => {
       setError(null);
       console.log('Teams page: Starting to fetch teams...');
       
-      const teamsData = await teamsService.getTeams();
+      const teamsData = await dataService.getTeams();
       console.log('Teams page: Received teams data:', teamsData);
       
       setTeams(teamsData || []);

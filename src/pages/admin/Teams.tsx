@@ -8,46 +8,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Save, X, Search, Users } from 'lucide-react';
-import { teamsService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
+import { dataService, Team } from '@/services/dataService';
 import { useNavigate } from 'react-router-dom';
 
 const AdminTeams = () => {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingTeam, setEditingTeam] = useState<string | null>(null);
-  const [editData, setEditData] = useState<any>({});
+  const [editingTeam, setEditingTeam] = useState<number | null>(null);
+  const [editData, setEditData] = useState<Partial<Team>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTeams();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('teams-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'teams'
-        },
-        () => {
-          fetchTeams();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchTeams = async () => {
     try {
-      const data = await teamsService.getTeams();
+      const data = await dataService.getTeams();
       setTeams(data || []);
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -61,14 +40,16 @@ const AdminTeams = () => {
     }
   };
 
-  const handleEdit = (team: any) => {
+  const handleEdit = (team: Team) => {
     setEditingTeam(team.id);
     setEditData({ ...team });
   };
 
   const handleSave = async () => {
+    if (!editingTeam) return;
+    
     try {
-      await teamsService.updateTeam(editingTeam!, editData);
+      await dataService.updateTeam(editingTeam, editData);
       toast({
         title: "Success",
         description: "Team updated successfully",
@@ -90,13 +71,13 @@ const AdminTeams = () => {
     setEditData({});
   };
 
-  const handleManageTeam = (teamId: string) => {
+  const handleManageTeam = (teamId: number) => {
     navigate(`/team/${teamId}/management`);
   };
 
   const filteredTeams = teams.filter(team =>
     team.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.account_id?.toLowerCase().includes(searchTerm.toLowerCase())
+    team.accountId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -189,21 +170,21 @@ const AdminTeams = () => {
                     <Label>Account ID</Label>
                     {editingTeam === team.id ? (
                       <Input
-                        value={editData.account_id || ''}
-                        onChange={(e) => setEditData({ ...editData, account_id: e.target.value })}
+                        value={editData.accountId || ''}
+                        onChange={(e) => setEditData({ ...editData, accountId: e.target.value })}
                       />
                     ) : (
-                      <p className="text-sm font-mono">{team.account_id || 'No Account ID'}</p>
+                      <p className="text-sm font-mono">{team.accountId || 'No Account ID'}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label>Members ({team.team_members?.length || 0})</Label>
+                    <Label>Members ({team.members?.length || 0})</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {team.team_members && team.team_members.length > 0 ? (
-                        team.team_members.map((member: any, index: number) => (
+                      {team.members && team.members.length > 0 ? (
+                        team.members.map((member, index) => (
                           <div key={index} className="bg-muted px-2 py-1 rounded text-sm">
-                            {member.name} - {member.role}
+                            {member.avatar} {member.name} - {member.role}
                           </div>
                         ))
                       ) : (
@@ -217,7 +198,7 @@ const AdminTeams = () => {
                       <span className="font-medium">Points:</span> {team.points || 0}
                     </div>
                     <div>
-                      <span className="font-medium">Challenges:</span> {team.team_challenges?.length || 0}
+                      <span className="font-medium">Challenges:</span> {team.challenges?.length || 0}
                     </div>
                   </div>
                 </CardContent>

@@ -8,67 +8,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { teamsService, challengesService, leaderboardService } from '@/services/supabaseService';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { dataService, Team, Challenge } from '@/services/dataService';
 
 const AdminLeaderboard = () => {
-  const [teams, setTeams] = useState<any[]>([]);
-  const [challenges, setChallenges] = useState<any[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [leaderboard, setLeaderboard] = useState<(Team & { totalPoints: number })[]>([]);
   const [selectedTeam, setSelectedTeam] = useState('');
   const [selectedChallenge, setSelectedChallenge] = useState('');
   const [points, setPoints] = useState('');
   const [description, setDescription] = useState('');
   const { toast } = useToast();
-  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
-    
-    // Set up real-time subscriptions
-    const leaderboardChannel = supabase
-      .channel('leaderboard-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leaderboard_entries'
-        },
-        () => {
-          fetchLeaderboard();
-        }
-      )
-      .subscribe();
-
-    const teamsChannel = supabase
-      .channel('teams-points-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'teams'
-        },
-        () => {
-          fetchLeaderboard();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(leaderboardChannel);
-      supabase.removeChannel(teamsChannel);
-    };
   }, []);
 
   const fetchData = async () => {
     try {
       const [teamsData, challengesData, leaderboardData] = await Promise.all([
-        teamsService.getTeams(),
-        challengesService.getChallenges(true),
-        leaderboardService.getLeaderboard()
+        dataService.getTeams(),
+        dataService.getAllChallenges(),
+        dataService.getLeaderboard()
       ]);
       
       setTeams(teamsData);
@@ -81,7 +42,7 @@ const AdminLeaderboard = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const data = await leaderboardService.getLeaderboard();
+      const data = await dataService.getLeaderboard();
       setLeaderboard(data);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -89,7 +50,7 @@ const AdminLeaderboard = () => {
   };
 
   const handleAssignPoints = async () => {
-    if (!selectedTeam || !points || !user) {
+    if (!selectedTeam || !points) {
       toast({
         title: "Error",
         description: "Please fill in team and points fields",
@@ -99,13 +60,7 @@ const AdminLeaderboard = () => {
     }
 
     try {
-      await leaderboardService.assignPoints({
-        team_id: selectedTeam,
-        challenge_id: selectedChallenge || undefined,
-        points: parseInt(points),
-        description,
-        assigned_by: user.id
-      });
+      await dataService.assignPoints(parseInt(selectedTeam), parseInt(points), description);
 
       toast({
         title: "Success",
@@ -118,6 +73,7 @@ const AdminLeaderboard = () => {
       setPoints('');
       setDescription('');
       
+      fetchLeaderboard();
     } catch (error) {
       console.error('Error assigning points:', error);
       toast({
@@ -152,7 +108,7 @@ const AdminLeaderboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
+                        <SelectItem key={team.id} value={team.id.toString()}>
                           {team.name}
                         </SelectItem>
                       ))}
@@ -168,7 +124,7 @@ const AdminLeaderboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {challenges.map((challenge) => (
-                        <SelectItem key={challenge.id} value={challenge.id}>
+                        <SelectItem key={challenge.id} value={challenge.id.toString()}>
                           {challenge.title}
                         </SelectItem>
                       ))}

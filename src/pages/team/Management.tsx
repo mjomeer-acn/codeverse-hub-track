@@ -9,20 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, X, Save } from 'lucide-react';
-import { teamsService, teamMembersService } from '@/services/supabaseService';
-import { supabase } from '@/integrations/supabase/client';
-
-interface TeamMember {
-  id?: string;
-  name: string;
-  role: string;
-  avatar: string;
-}
+import { dataService, Team, TeamMember } from '@/services/dataService';
 
 const TeamManagement = () => {
   const { teamId } = useParams();
-  const [team, setTeam] = useState<any>(null);
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [team, setTeam] = useState<Team | null>(null);
   const [description, setDescription] = useState('');
   const [newMember, setNewMember] = useState<TeamMember>({ name: '', role: '', avatar: '👨‍💻' });
   const [loading, setLoading] = useState(true);
@@ -32,35 +23,13 @@ const TeamManagement = () => {
     if (teamId) {
       fetchTeam();
     }
-
-    // Set up real-time subscription for team members
-    const channel = supabase
-      .channel('team-members-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'team_members',
-          filter: `team_id=eq.${teamId}`
-        },
-        () => {
-          fetchTeam();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [teamId]);
 
   const fetchTeam = async () => {
     try {
-      const data = await teamsService.getTeamById(teamId!);
+      const data = await dataService.getTeamById(parseInt(teamId!));
       setTeam(data);
-      setMembers(data.team_members || []);
-      setDescription(data.description || '');
+      setDescription(data?.description || '');
     } catch (error) {
       console.error('Error fetching team:', error);
       toast({
@@ -74,7 +43,7 @@ const TeamManagement = () => {
   };
 
   const handleAddMember = async () => {
-    if (!newMember.name || !newMember.role) {
+    if (!newMember.name || !newMember.role || !team) {
       toast({
         title: "Error",
         description: "Please fill in member name and role",
@@ -83,7 +52,7 @@ const TeamManagement = () => {
       return;
     }
 
-    if (members.length >= 4) {
+    if (team.members.length >= 4) {
       toast({
         title: "Error",
         description: "Maximum 4 members per team",
@@ -93,13 +62,15 @@ const TeamManagement = () => {
     }
 
     try {
-      await teamMembersService.addMember(teamId!, newMember);
+      await dataService.addTeamMember(team.id, newMember);
       setNewMember({ name: '', role: '', avatar: '👨‍💻' });
       
       toast({
         title: "Success",
         description: "Team member added successfully",
       });
+      
+      fetchTeam();
     } catch (error) {
       console.error('Error adding member:', error);
       toast({
@@ -110,13 +81,16 @@ const TeamManagement = () => {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = async (memberIndex: number) => {
+    if (!team) return;
+    
     try {
-      await teamMembersService.deleteMember(memberId);
+      await dataService.removeTeamMember(team.id, memberIndex);
       toast({
         title: "Success",
         description: "Team member removed",
       });
+      fetchTeam();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({
@@ -128,8 +102,10 @@ const TeamManagement = () => {
   };
 
   const handleSaveTeam = async () => {
+    if (!team) return;
+    
     try {
-      await teamsService.updateTeam(teamId!, { description });
+      await dataService.updateTeam(team.id, { description });
       
       toast({
         title: "Success",
@@ -152,6 +128,19 @@ const TeamManagement = () => {
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <TeamSidebar />
+        <main className="flex-1 p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Team not found</h1>
           </div>
         </main>
       </div>
@@ -194,11 +183,11 @@ const TeamManagement = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Current Team Members ({members.length}/4)</CardTitle>
+                  <CardTitle>Current Team Members ({team.members.length}/4)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  {team.members.map((member, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
                           {member.avatar}
@@ -211,14 +200,14 @@ const TeamManagement = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRemoveMember(member.id!)}
+                        onClick={() => handleRemoveMember(index)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
                   
-                  {members.length === 0 && (
+                  {team.members.length === 0 && (
                     <p className="text-muted-foreground text-center py-4">
                       No team members added yet
                     </p>
@@ -254,7 +243,7 @@ const TeamManagement = () => {
                   <Button 
                     onClick={handleAddMember} 
                     className="w-full"
-                    disabled={members.length >= 4}
+                    disabled={team.members.length >= 4}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Member

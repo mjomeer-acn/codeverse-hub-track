@@ -15,18 +15,18 @@ const Auth = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, user, profile } = useAuth();
+  const { signIn, user } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user && profile) {
-      if (profile.role === 'admin') {
+    if (user) {
+      if (user.role === 'admin') {
         navigate('/admin/dashboard');
-      } else if (profile.role === 'team_lead') {
+      } else if (user.role === 'team_lead') {
         navigate('/team/dashboard');
       }
     }
-  }, [user, profile, navigate]);
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +63,7 @@ const Auth = () => {
                     <Input
                       id="admin-email"
                       type="email"
-                      placeholder="Enter your admin email"
+                      placeholder="admin@accenture.com"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required
@@ -74,7 +74,7 @@ const Auth = () => {
                     <Input
                       id="admin-password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="CodeVerse2025"
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
                       required
@@ -93,11 +93,11 @@ const Auth = () => {
               <TabsContent value="team" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="team-email">Email</Label>
+                    <Label htmlFor="team-account">Account ID</Label>
                     <Input
-                      id="team-email"
-                      type="email"
-                      placeholder="Enter your team lead email"
+                      id="team-account"
+                      type="text"
+                      placeholder="team_001"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       required
@@ -108,7 +108,7 @@ const Auth = () => {
                     <Input
                       id="team-password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="team.pass"
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
                       required
@@ -124,6 +124,14 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium mb-2">Demo Credentials:</p>
+              <div className="text-xs space-y-1">
+                <div><strong>Admin:</strong> admin@accenture.com / CodeVerse2025</div>
+                <div><strong>Team:</strong> team_001 / team.pass</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ChallengeCard from '@/components/ChallengeCard';
-import { challengesService } from '@/services/supabaseService';
+import { dataService, Challenge } from '@/services/dataService';
 
 const Challenges = () => {
-  const [challenges, setChallenges] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +19,7 @@ const Challenges = () => {
       setError(null);
       console.log('Challenges page: Starting to fetch challenges...');
       
-      const challengesData = await challengesService.getChallenges();
+      const challengesData = await dataService.getChallenges();
       console.log('Challenges page: Received challenges data:', challengesData);
       
       setChallenges(challengesData || []);
