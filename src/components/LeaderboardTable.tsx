@@ -110,18 +110,12 @@ const LeaderboardTable = () => {
                   </div>
                   
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">
+                    <div className="text-3xl font-bold text-primary">
                       {team.totalPoints || 0}
                     </div>
                     <div className="text-sm text-muted-foreground">points</div>
                   </div>
                 </div>
-
-                {team.description && (
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">{team.description}</p>
-                  </div>
-                )}
 
                 {team.members && team.members.length > 0 && (
                   <div className="mt-4 pt-4 border-t">

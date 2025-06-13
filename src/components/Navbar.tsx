@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -55,10 +55,10 @@ const Navbar = () => {
             ))}
             <DarkModeToggle />
             
-            {user && profile ? (
+            {user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground">
-                  {profile.role === 'admin' ? 'Admin' : 'Team Lead'}
+                  {user.role === 'admin' ? 'Admin' : 'Team Lead'}
                 </span>
                 <Button 
                   variant="outline" 
@@ -105,10 +105,10 @@ const Navbar = () => {
                   <DarkModeToggle />
                 </div>
                 
-                {user && profile ? (
+                {user ? (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Signed in as {profile.role === 'admin' ? 'Admin' : 'Team Lead'}
+                      Signed in as {user.role === 'admin' ? 'Admin' : 'Team Lead'}
                     </p>
                     <Button 
                       onClick={handleSignOut}

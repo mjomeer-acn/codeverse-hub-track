@@ -8,22 +8,12 @@
     },
     {
       "role": "team_lead",
-      "accountId": "team_001",
+      "email": "team01@accenture.com",
       "password": "team.pass"
     },
     {
       "role": "team_lead",
-      "accountId": "team_002",
-      "password": "team.pass"
-    },
-    {
-      "role": "team_lead",
-      "accountId": "team_003",
-      "password": "team.pass"
-    },
-    {
-      "role": "team_lead",
-      "accountId": "team_004",
+      "email": "team02@accenture.com",
       "password": "team.pass"
     }
   ],

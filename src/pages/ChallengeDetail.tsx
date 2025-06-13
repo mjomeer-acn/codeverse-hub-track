@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, Users, Trophy, CheckCircle } from 'lucide-react';
-import { challengesService } from '@/services/supabaseService';
+import { dataService, Challenge, Team } from '@/services/dataService';
 
 const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [challenge, setChallenge] = useState<any>(null);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [participatingTeams, setParticipatingTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +29,16 @@ const ChallengeDetail = () => {
       setError(null);
       console.log('Challenge Detail: Fetching challenge with ID:', id);
       
-      const challengeData = await challengesService.getChallengeById(id);
+      const challengeData = await dataService.getChallengeById(parseInt(id));
       console.log('Challenge Detail: Received challenge data:', challengeData);
       
-      setChallenge(challengeData);
+      if (challengeData) {
+        setChallenge(challengeData);
+        
+        // Get participating teams for this challenge
+        const teams = await dataService.getChallengeTeams(parseInt(id));
+        setParticipatingTeams(teams);
+      }
     } catch (error) {
       console.error('Challenge Detail: Error fetching challenge:', error);
       setError('Failed to load challenge details. Please try again.');
@@ -107,8 +114,6 @@ const ChallengeDetail = () => {
     );
   }
 
-  const participatingTeams = challenge.team_challenges?.map((tc: any) => tc.teams) || [];
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -145,21 +150,21 @@ const ChallengeDetail = () => {
                       <Clock className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Time Remaining</div>
-                        <div className="font-semibold">{challenge.time_remaining || 'No limit'}</div>
+                        <div className="font-semibold">{challenge.timeRemaining || 'No limit'}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Participating Teams</div>
-                        <div className="font-semibold">{challenge.participating_teams || 0}</div>
+                        <div className="font-semibold">{challenge.participatingTeams || 0}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="text-sm text-muted-foreground">Maximum Points</div>
-                        <div className="font-semibold">{challenge.max_points}</div>
+                        <div className="font-semibold">{challenge.maxPoints}</div>
                       </div>
                     </div>
                   </div>
@@ -203,7 +208,7 @@ const ChallengeDetail = () => {
               <CardContent>
                 {participatingTeams.length > 0 ? (
                   <div className="space-y-3">
-                    {participatingTeams.map((team: any) => (
+                    {participatingTeams.map((team: Team) => (
                       <div key={team.id} className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                         <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                           {team.avatar || '🧠'}
