@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  User, 
   Users, 
   LogOut,
   Home
@@ -18,7 +17,6 @@ const TeamSidebar = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/team/dashboard' },
-    { icon: User, label: 'Manage Profile', path: '/team/1/profile' },
     { icon: Users, label: 'Manage Team', path: '/team/1/management' },
   ];
 

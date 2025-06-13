@@ -73,7 +73,8 @@ const AdminLeaderboard = () => {
       setPoints('');
       setDescription('');
       
-      fetchLeaderboard();
+      // Refresh all data
+      await fetchData();
     } catch (error) {
       console.error('Error assigning points:', error);
       toast({

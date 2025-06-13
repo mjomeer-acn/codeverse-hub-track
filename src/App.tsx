@@ -19,7 +19,6 @@ import AdminTeams from "./pages/admin/Teams";
 import AdminLeaderboard from "./pages/admin/Leaderboard";
 import AdminChallenges from "./pages/admin/Challenges";
 import TeamDashboard from "./pages/team/Dashboard";
-import TeamProfile from "./pages/team/Profile";
 import TeamManagement from "./pages/team/Management";
 import NotFound from "./pages/NotFound";
 
@@ -68,11 +67,6 @@ const App = () => (
             <Route path="/team/dashboard" element={
               <ProtectedRoute allowedRoles={['team_lead']}>
                 <TeamDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/team/:teamId/profile" element={
-              <ProtectedRoute allowedRoles={['team_lead']}>
-                <TeamProfile />
               </ProtectedRoute>
             } />
             <Route path="/team/:teamId/management" element={
