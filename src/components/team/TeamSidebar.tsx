@@ -9,19 +9,21 @@ import {
   LogOut,
   Home
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const TeamSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/team/dashboard' },
-    { icon: User, label: 'Manage Profile', path: '/team/profile' },
-    { icon: Users, label: 'Manage Team', path: '/team/management' },
+    { icon: User, label: 'Manage Profile', path: '/team/1/profile' },
+    { icon: Users, label: 'Manage Team', path: '/team/1/management' },
   ];
 
-  const handleLogout = () => {
-    // Add logout logic here if needed
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 

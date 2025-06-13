@@ -10,10 +10,12 @@ import {
   LogOut,
   Home
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
@@ -22,8 +24,8 @@ const AdminSidebar = () => {
     { icon: Target, label: 'Manage Challenges', path: '/admin/challenges' },
   ];
 
-  const handleLogout = () => {
-    // Add logout logic here if needed
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 

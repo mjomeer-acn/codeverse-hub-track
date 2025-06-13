@@ -1,3 +1,4 @@
+
 import mockData from '../data/mockData.json';
 
 export interface User {
@@ -44,6 +45,9 @@ export interface LeaderboardEntry {
   points: number;
 }
 
+// Store for in-memory modifications
+let modifiedData = JSON.parse(JSON.stringify(mockData));
+
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -51,7 +55,7 @@ export const dataService = {
   // Auth
   async authenticateUser(identifier: string, password: string): Promise<User | null> {
     await delay(500);
-    const user = mockData.users.find(u => 
+    const user = modifiedData.users.find((u: any) => 
       u.email === identifier && u.password === password
     );
     return user ? user as User : null;
@@ -60,55 +64,54 @@ export const dataService = {
   // Teams
   async getTeams(): Promise<Team[]> {
     await delay(300);
-    return mockData.teams as Team[];
+    return modifiedData.teams as Team[];
   },
 
   async getTeamById(id: number): Promise<Team | null> {
     await delay(300);
-    const team = mockData.teams.find(team => team.id === id);
+    const team = modifiedData.teams.find((team: any) => team.id === id);
     return team ? team as Team : null;
   },
 
   async updateTeam(id: number, updates: Partial<Team>): Promise<Team> {
     await delay(300);
-    // In a real app, this would update the database
-    const team = mockData.teams.find(t => t.id === id);
-    if (team) {
-      Object.assign(team, updates);
+    const teamIndex = modifiedData.teams.findIndex((t: any) => t.id === id);
+    if (teamIndex !== -1) {
+      modifiedData.teams[teamIndex] = { ...modifiedData.teams[teamIndex], ...updates };
     }
-    return team as Team;
+    return modifiedData.teams[teamIndex] as Team;
   },
 
   // Challenges
   async getChallenges(): Promise<Challenge[]> {
     await delay(300);
-    return mockData.challenges.filter(challenge => challenge.isVisible) as Challenge[];
+    return modifiedData.challenges.filter((challenge: any) => challenge.isVisible) as Challenge[];
   },
 
   async getAllChallenges(): Promise<Challenge[]> {
     await delay(300);
-    return mockData.challenges as Challenge[];
+    return modifiedData.challenges as Challenge[];
   },
 
   async getChallengeById(id: number): Promise<Challenge | null> {
     await delay(300);
-    const challenge = mockData.challenges.find(challenge => challenge.id === id);
+    const challenge = modifiedData.challenges.find((challenge: any) => challenge.id === id);
     return challenge ? challenge as Challenge : null;
   },
 
   async updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge> {
     await delay(300);
-    const challenge = mockData.challenges.find(c => c.id === id);
-    if (challenge) {
-      Object.assign(challenge, updates);
+    const challengeIndex = modifiedData.challenges.findIndex((c: any) => c.id === id);
+    if (challengeIndex !== -1) {
+      modifiedData.challenges[challengeIndex] = { ...modifiedData.challenges[challengeIndex], ...updates };
     }
-    return challenge as Challenge;
+    return modifiedData.challenges[challengeIndex] as Challenge;
   },
 
   // Leaderboard
   async getLeaderboard(): Promise<(Team & { totalPoints: number })[]> {
     await delay(300);
-    const teams = mockData.teams as Team[];
+    const teams = modifiedData.teams as Team[];
     const leaderboard = teams.map(team => ({
       ...team,
       totalPoints: team.points
@@ -124,8 +127,8 @@ export const dataService = {
     daysRemaining: number;
   }> {
     await delay(300);
-    const teams = mockData.teams as Team[];
-    const challenges = mockData.challenges.filter(c => c.isVisible) as Challenge[];
+    const teams = modifiedData.teams as Team[];
+    const challenges = modifiedData.challenges.filter((c: any) => c.isVisible) as Challenge[];
     const totalPoints = teams.reduce((sum, team) => sum + team.points, 0);
     
     return {
@@ -139,10 +142,10 @@ export const dataService = {
   // Get challenges for a team
   async getTeamChallenges(teamId: number): Promise<Challenge[]> {
     await delay(300);
-    const team = mockData.teams.find(t => t.id === teamId);
+    const team = modifiedData.teams.find((t: any) => t.id === teamId);
     if (!team) return [];
     
-    return mockData.challenges.filter(challenge => 
+    return modifiedData.challenges.filter((challenge: any) => 
       team.challenges.includes(challenge.id)
     ) as Challenge[];
   },
@@ -150,7 +153,7 @@ export const dataService = {
   // Get participating teams for a challenge
   async getChallengeTeams(challengeId: number): Promise<Team[]> {
     await delay(300);
-    return mockData.teams.filter(team => 
+    return modifiedData.teams.filter((team: any) => 
       team.challenges.includes(challengeId)
     ) as Team[];
   },
@@ -158,26 +161,26 @@ export const dataService = {
   // Team members
   async addTeamMember(teamId: number, member: TeamMember): Promise<void> {
     await delay(300);
-    const team = mockData.teams.find(t => t.id === teamId);
-    if (team && team.members.length < 4) {
-      team.members.push(member);
+    const teamIndex = modifiedData.teams.findIndex((t: any) => t.id === teamId);
+    if (teamIndex !== -1 && modifiedData.teams[teamIndex].members.length < 4) {
+      modifiedData.teams[teamIndex].members.push(member);
     }
   },
 
   async removeTeamMember(teamId: number, memberIndex: number): Promise<void> {
     await delay(300);
-    const team = mockData.teams.find(t => t.id === teamId);
-    if (team) {
-      team.members.splice(memberIndex, 1);
+    const teamIndex = modifiedData.teams.findIndex((t: any) => t.id === teamId);
+    if (teamIndex !== -1) {
+      modifiedData.teams[teamIndex].members.splice(memberIndex, 1);
     }
   },
 
   // Assign points
   async assignPoints(teamId: number, points: number, description?: string): Promise<void> {
     await delay(300);
-    const team = mockData.teams.find(t => t.id === teamId);
-    if (team) {
-      team.points += points;
+    const teamIndex = modifiedData.teams.findIndex((t: any) => t.id === teamId);
+    if (teamIndex !== -1) {
+      modifiedData.teams[teamIndex].points += points;
     }
   }
 };

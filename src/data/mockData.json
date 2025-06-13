@@ -197,6 +197,82 @@
         "Monitoring and alerts",
         "Scalability considerations"
       ]
+    },
+    {
+      "id": 7,
+      "title": "Minigame 01: Code Golf",
+      "description": "Solve programming challenges using the fewest lines of code possible. Test your ability to write concise, efficient solutions.",
+      "difficulty": "Easy",
+      "category": "Minigame",
+      "timeRemaining": "2 hours",
+      "participatingTeams": 20,
+      "maxPoints": 200,
+      "isVisible": false,
+      "icon": "⛳",
+      "status": "active",
+      "requirements": [
+        "Solve 5 coding challenges",
+        "Minimize lines of code",
+        "Maintain code readability",
+        "Submit within time limit"
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Minigame 02: Bug Hunt",
+      "description": "Find and fix bugs in provided code snippets. Speed and accuracy are key to winning this debugging challenge.",
+      "difficulty": "Easy",
+      "category": "Minigame",
+      "timeRemaining": "1 hour",
+      "participatingTeams": 15,
+      "maxPoints": 150,
+      "isVisible": false,
+      "icon": "🐛",
+      "status": "active",
+      "requirements": [
+        "Find all bugs in code",
+        "Provide correct fixes",
+        "Explain the bug causes",
+        "Complete within time limit"
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Minigame 03: API Speed Challenge",
+      "description": "Build a REST API that can handle high traffic loads. Optimize for speed and reliability under pressure.",
+      "difficulty": "Medium",
+      "category": "Minigame",
+      "timeRemaining": "3 hours",
+      "participatingTeams": 12,
+      "maxPoints": 300,
+      "isVisible": false,
+      "icon": "⚡",
+      "status": "active",
+      "requirements": [
+        "Build functional REST API",
+        "Handle 1000+ requests/second",
+        "Implement proper error handling",
+        "Pass all performance tests"
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Minigame 04: UI Pixel Perfect",
+      "description": "Recreate a design mockup with pixel-perfect accuracy. Every detail matters in this precision challenge.",
+      "difficulty": "Medium",
+      "category": "Minigame",
+      "timeRemaining": "2 hours",
+      "participatingTeams": 18,
+      "maxPoints": 250,
+      "isVisible": false,
+      "icon": "🎯",
+      "status": "active",
+      "requirements": [
+        "Match design exactly",
+        "Responsive implementation",
+        "Cross-browser compatibility",
+        "Optimized performance"
+      ]
     }
   ],
   "leaderboard": [

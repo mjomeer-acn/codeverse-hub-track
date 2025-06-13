@@ -4,18 +4,14 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Save, X, Search, Users } from 'lucide-react';
+import { Edit, Search, Users } from 'lucide-react';
 import { dataService, Team } from '@/services/dataService';
 import { useNavigate } from 'react-router-dom';
 
 const AdminTeams = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingTeam, setEditingTeam] = useState<number | null>(null);
-  const [editData, setEditData] = useState<Partial<Team>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -40,38 +36,7 @@ const AdminTeams = () => {
     }
   };
 
-  const handleEdit = (team: Team) => {
-    setEditingTeam(team.id);
-    setEditData({ ...team });
-  };
-
-  const handleSave = async () => {
-    if (!editingTeam) return;
-    
-    try {
-      await dataService.updateTeam(editingTeam, editData);
-      toast({
-        title: "Success",
-        description: "Team updated successfully",
-      });
-      setEditingTeam(null);
-      fetchTeams();
-    } catch (error) {
-      console.error('Error updating team:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update team",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingTeam(null);
-    setEditData({});
-  };
-
-  const handleManageTeam = (teamId: number) => {
+  const handleEditTeam = (teamId: number) => {
     navigate(`/team/${teamId}/management`);
   };
 
@@ -120,67 +85,28 @@ const AdminTeams = () => {
               <Card key={team.id}>
                 <CardHeader>
                   <CardTitle className="flex justify-between items-center">
-                    {editingTeam === team.id ? (
-                      <Input
-                        value={editData.name || ''}
-                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                        className="text-lg font-bold"
-                      />
-                    ) : (
-                      team.name || 'Unnamed Team'
-                    )}
-                    <div className="flex space-x-2">
-                      {editingTeam === team.id ? (
-                        <>
-                          <Button size="sm" onClick={handleSave}>
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(team)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" onClick={() => handleManageTeam(team.id)}>
-                            <Users className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                    {team.name || 'Unnamed Team'}
+                    <Button size="sm" onClick={() => handleEditTeam(team.id)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Team
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Description</Label>
-                    {editingTeam === team.id ? (
-                      <Textarea
-                        value={editData.description || ''}
-                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                        rows={3}
-                      />
-                    ) : (
-                      <p className="text-sm text-muted-foreground">{team.description || 'No description'}</p>
-                    )}
+                    <p className="text-sm text-muted-foreground">{team.description || 'No description'}</p>
                   </div>
                   
                   <div>
-                    <Label>Account ID</Label>
-                    {editingTeam === team.id ? (
-                      <Input
-                        value={editData.accountId || ''}
-                        onChange={(e) => setEditData({ ...editData, accountId: e.target.value })}
-                      />
-                    ) : (
-                      <p className="text-sm font-mono">{team.accountId || 'No Account ID'}</p>
-                    )}
+                    <p className="text-sm font-mono">{team.accountId || 'No Account ID'}</p>
                   </div>
 
                   <div>
-                    <Label>Members ({team.members?.length || 0})</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Users className="h-4 w-4" />
+                      <span className="text-sm font-medium">Members ({team.members?.length || 0})</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {team.members && team.members.length > 0 ? (
                         team.members.map((member, index) => (
                           <div key={index} className="bg-muted px-2 py-1 rounded text-sm">
