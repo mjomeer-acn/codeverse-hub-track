@@ -1,10 +1,8 @@
-
 import mockData from '../data/mockData.json';
 
 export interface User {
   role: 'admin' | 'team_lead';
   email?: string;
-  accountId?: string;
   password: string;
 }
 
@@ -54,7 +52,7 @@ export const dataService = {
   async authenticateUser(identifier: string, password: string): Promise<User | null> {
     await delay(500);
     const user = mockData.users.find(u => 
-      (u.email === identifier || u.accountId === identifier) && u.password === password
+      u.email === identifier && u.password === password
     );
     return user ? user as User : null;
   },
